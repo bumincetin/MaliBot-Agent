@@ -32,7 +32,13 @@ ENV/
 *.swo
 
 # Project specific
+*.log
+.env
+.env.local
+.env.*.local
+.DS_Store
+
+# Project specific
 memory/*.pdf
 memory/*.json
-.env
 *.log 

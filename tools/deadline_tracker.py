@@ -5,7 +5,8 @@ import os
 
 class DeadlineTracker:
     def __init__(self):
-        self.deadlines_file = "data/deadlines.json"
+        self.data_dir = "./data/deadlines"
+        os.makedirs(self.data_dir, exist_ok=True)
         self.deadlines = self._load_deadlines()
         
         # Common tax declaration deadlines
@@ -25,61 +26,102 @@ class DeadlineTracker:
             }
         }
     
-    def _load_deadlines(self) -> Dict[str, Any]:
-        """Load deadlines from JSON file."""
-        if os.path.exists(self.deadlines_file):
-            with open(self.deadlines_file, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        return {}
-    
-    def _save_deadlines(self):
-        """Save deadlines to JSON file."""
-        os.makedirs(os.path.dirname(self.deadlines_file), exist_ok=True)
-        with open(self.deadlines_file, 'w', encoding='utf-8') as f:
-            json.dump(self.deadlines, f, ensure_ascii=False, indent=2)
+    def _load_deadlines(self) -> List[Dict]:
+        """Load deadlines from file."""
+        deadlines_file = os.path.join(self.data_dir, "deadlines.json")
+        
+        if not os.path.exists(deadlines_file):
+            # Create default deadlines
+            deadlines = [
+                {
+                    "name": "KDV Beyannamesi",
+                    "date": (datetime.now() + timedelta(days=7)).strftime("%d.%m.%Y"),
+                    "period": "monthly"
+                },
+                {
+                    "name": "Muhtasar Beyanname",
+                    "date": (datetime.now() + timedelta(days=14)).strftime("%d.%m.%Y"),
+                    "period": "monthly"
+                },
+                {
+                    "name": "Geçici Vergi Beyannamesi",
+                    "date": (datetime.now() + timedelta(days=30)).strftime("%d.%m.%Y"),
+                    "period": "quarterly"
+                },
+                {
+                    "name": "Kurumlar Vergisi Beyannamesi",
+                    "date": (datetime.now() + timedelta(days=60)).strftime("%d.%m.%Y"),
+                    "period": "yearly"
+                }
+            ]
+            
+            # Save to file
+            with open(deadlines_file, "w", encoding="utf-8") as f:
+                json.dump(deadlines, f, ensure_ascii=False, indent=2)
+        
+        else:
+            # Load from file
+            with open(deadlines_file, "r", encoding="utf-8") as f:
+                deadlines = json.load(f)
+        
+        return deadlines
     
     async def check(self, message: str) -> str:
-        """Check deadlines based on user query."""
-        try:
-            # Extract tax type and period from message
-            tax_type = self._extract_tax_type(message)
-            period = self._extract_period(message)
+        """Check deadlines based on the message."""
+        # Extract period from message
+        period = self._extract_period(message)
+        
+        # Get relevant deadlines
+        deadlines = self._get_deadlines(period)
+        
+        if not deadlines:
+            return "Bu dönem için yaklaşan beyanname tarihi bulunamadı."
+        
+        # Format response
+        response = "Yaklaşan Beyanname Tarihleri:\n\n"
+        for deadline in deadlines:
+            days_left = (deadline["date"] - datetime.now()).days
+            status = "⚠️ ACİL" if days_left <= 3 else "✓ Normal"
             
-            if not tax_type:
-                return self._list_all_deadlines()
-            
-            if tax_type in self.common_deadlines:
-                deadline_info = self.common_deadlines[tax_type]
-                if period in deadline_info:
-                    return f"{tax_type} {period} beyanname son tarihi: {deadline_info[period]}"
-                else:
-                    return f"{tax_type} için mevcut son tarihler:\n" + "\n".join(
-                        f"- {p}: {d}" for p, d in deadline_info.items()
-                    )
-            else:
-                return f"{tax_type} için son tarih bilgisi bulunamadı."
-                
-        except Exception as e:
-            return f"Son tarih kontrolü sırasında bir hata oluştu: {str(e)}"
-    
-    def _extract_tax_type(self, message: str) -> str:
-        """Extract tax type from message."""
-        message = message.lower()
-        for tax_type in self.common_deadlines.keys():
-            if tax_type.lower() in message:
-                return tax_type
-        return ""
+            response += f"""
+{status}
+- Beyanname: {deadline['name']}
+- Son Tarih: {deadline['date'].strftime('%d.%m.%Y')}
+- Kalan Gün: {days_left} gün
+"""
+        
+        return response
     
     def _extract_period(self, message: str) -> str:
         """Extract period from message."""
         message = message.lower()
-        if "aylık" in message or "ay" in message:
+        if "yıllık" in message:
+            return "yearly"
+        elif "aylık" in message:
             return "monthly"
-        elif "yıllık" in message or "yıl" in message:
-            return "annual"
-        elif "çeyreklik" in message or "çeyrek" in message:
+        elif "3" in message or "üç" in message:
             return "quarterly"
-        return ""
+        else:
+            return "all"
+    
+    def _get_deadlines(self, period: str) -> List[Dict]:
+        """Get deadlines for the specified period."""
+        now = datetime.now()
+        deadlines = []
+        
+        for deadline in self.deadlines:
+            deadline_date = datetime.strptime(deadline["date"], "%d.%m.%Y")
+            if deadline_date < now:
+                continue
+            
+            if period == "all" or deadline["period"] == period:
+                deadlines.append({
+                    "name": deadline["name"],
+                    "date": deadline_date,
+                    "period": deadline["period"]
+                })
+        
+        return sorted(deadlines, key=lambda x: x["date"])
     
     def _list_all_deadlines(self) -> str:
         """List all available deadlines."""

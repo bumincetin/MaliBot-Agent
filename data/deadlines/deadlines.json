@@ -1,0 +1,22 @@
+[
+  {
+    "name": "KDV Beyannamesi",
+    "date": "01.04.2025",
+    "period": "monthly"
+  },
+  {
+    "name": "Muhtasar Beyanname",
+    "date": "08.04.2025",
+    "period": "monthly"
+  },
+  {
+    "name": "Geçici Vergi Beyannamesi",
+    "date": "24.04.2025",
+    "period": "quarterly"
+  },
+  {
+    "name": "Kurumlar Vergisi Beyannamesi",
+    "date": "24.05.2025",
+    "period": "yearly"
+  }
+]

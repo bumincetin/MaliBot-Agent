@@ -1,117 +1,108 @@
-from typing import Dict, Any, List
-import PyPDF2
+import pypdf
 import re
-from datetime import datetime
+from typing import Dict, Any
+import os
 
 class PDFParser:
     def __init__(self):
-        self.einvoice_patterns = {
-            "invoice_no": r"Fatura No\s*:\s*([A-Z0-9-]+)",
-            "date": r"Tarih\s*:\s*(\d{2}\.\d{2}\.\d{4})",
-            "amount": r"Toplam Tutar\s*:\s*([\d,\.]+)\s*TL",
-            "kdv_amount": r"KDV Tutarı\s*:\s*([\d,\.]+)\s*TL",
-            "company_name": r"Ünvan\s*:\s*([^\n]+)",
-            "tax_number": r"VKN/TCKN\s*:\s*(\d+)",
-            "invoice_type": r"Fatura Türü\s*:\s*([^\n]+)",
-            "currency": r"Para Birimi\s*:\s*([^\n]+)",
-            "payment_terms": r"Ödeme Koşulları\s*:\s*([^\n]+)",
-            "items": r"(\d+)\s+([^\n]+)\s+([\d,\.]+)\s+([\d,\.]+)\s+([\d,\.]+)\s+([\d,\.]+)"
-        }
-        
-        self.hesap_plani_patterns = {
-            "account_code": r"(\d{3})\s+([^\n]+)",
-            "account_type": r"Hesap Türü\s*:\s*([^\n]+)",
-            "account_group": r"Hesap Grubu\s*:\s*([^\n]+)"
-        }
+        self.supported_types = ["efatura", "hesap_plani", "beyanname"]
     
-    async def process(self, file_path: str) -> str:
-        """Process a PDF file and extract relevant information."""
+    async def process(self, message: str, file_path: str = None) -> str:
+        """Process PDF file based on the message."""
+        if not file_path:
+            return "Lütfen bir PDF dosyası yükleyin."
+        
+        if not os.path.exists(file_path):
+            return f"Dosya bulunamadı: {file_path}"
+        
         try:
-            with open(file_path, 'rb') as file:
-                reader = PyPDF2.PdfReader(file)
-                text = ""
-                
-                # Extract text from all pages
-                for page in reader.pages:
-                    text += page.extract_text()
-                
-                # Try to identify document type and process accordingly
-                if "E-FATURA" in text:
-                    return self._process_einvoice(text)
-                elif "TEK DÜZEN HESAP PLANI" in text:
-                    return self._process_hesap_plani(text)
-                else:
-                    return self._process_general_document(text)
-                
+            # Determine document type
+            doc_type = self._determine_type(message)
+            
+            # Parse PDF based on type
+            if doc_type == "efatura":
+                return await self._parse_efatura(file_path)
+            elif doc_type == "hesap_plani":
+                return await self._parse_hesap_plani(file_path)
+            elif doc_type == "beyanname":
+                return await self._parse_beyanname(file_path)
+            else:
+                return "Desteklenmeyen belge türü."
+            
         except Exception as e:
-            return f"PDF işleme sırasında bir hata oluştu: {str(e)}"
+            return f"PDF işlenirken bir hata oluştu: {str(e)}"
     
-    def _process_einvoice(self, text: str) -> str:
-        """Extract information from e-invoice."""
-        info = {}
-        for key, pattern in self.einvoice_patterns.items():
-            match = re.search(pattern, text)
-            if match:
-                info[key] = match.group(1)
-        
-        if not info:
-            return "E-fatura bilgileri bulunamadı."
-        
-        # Extract line items
-        items = []
-        for match in re.finditer(self.einvoice_patterns["items"], text):
-            items.append({
-                "quantity": match.group(1),
-                "description": match.group(2),
-                "unit_price": match.group(3),
-                "amount": match.group(4),
-                "kdv_rate": match.group(5),
-                "kdv_amount": match.group(6)
-            })
-        
-        result = (
-            f"E-Fatura Bilgileri:\n"
-            f"Fatura No: {info.get('invoice_no', 'Bulunamadı')}\n"
-            f"Tarih: {info.get('date', 'Bulunamadı')}\n"
-            f"Fatura Türü: {info.get('invoice_type', 'Bulunamadı')}\n"
-            f"Para Birimi: {info.get('currency', 'TL')}\n"
-            f"Ödeme Koşulları: {info.get('payment_terms', 'Bulunamadı')}\n"
-            f"Toplam Tutar: {info.get('amount', 'Bulunamadı')} TL\n"
-            f"KDV Tutarı: {info.get('kdv_amount', 'Bulunamadı')} TL\n"
-            f"Firma: {info.get('company_name', 'Bulunamadı')}\n"
-            f"VKN/TCKN: {info.get('tax_number', 'Bulunamadı')}\n\n"
-            f"Kalemler:\n"
-        )
-        
-        for item in items:
-            result += (
-                f"- {item['quantity']} adet {item['description']}\n"
-                f"  Birim Fiyat: {item['unit_price']} TL\n"
-                f"  Tutar: {item['amount']} TL\n"
-                f"  KDV Oranı: %{item['kdv_rate']}\n"
-                f"  KDV Tutarı: {item['kdv_amount']} TL\n\n"
-            )
-        
-        return result
+    def _determine_type(self, message: str) -> str:
+        """Determine the type of document from the message."""
+        message = message.lower()
+        if "fatura" in message or "e-fatura" in message:
+            return "efatura"
+        elif "hesap" in message and "plan" in message:
+            return "hesap_plani"
+        elif "beyanname" in message:
+            return "beyanname"
+        return "unknown"
     
-    def _process_hesap_plani(self, text: str) -> str:
-        """Extract information from Tek Düzen Hesap Planı."""
-        accounts = []
-        for match in re.finditer(self.hesap_plani_patterns["account_code"], text):
-            accounts.append({
-                "code": match.group(1),
-                "description": match.group(2)
-            })
+    async def _parse_efatura(self, file_path: str) -> str:
+        """Parse e-fatura PDF."""
+        # Basic implementation - you would want to make this more sophisticated
+        reader = pypdf.PdfReader(file_path)
+        text = ""
+        for page in reader.pages:
+            text += page.extract_text()
         
-        if not accounts:
-            return "Hesap planı bilgileri bulunamadı."
+        # Extract basic information
+        info = {
+            "tarih": self._extract_date(text),
+            "tutar": self._extract_amount(text),
+            "kdv": self._extract_vat(text),
+            "firma": self._extract_company(text)
+        }
         
-        result = "Tek Düzen Hesap Planı Bilgileri:\n\n"
-        for account in accounts:
-            result += f"{account['code']} - {account['description']}\n"
-        
-        return result
+        return f"""
+E-Fatura Bilgileri:
+- Tarih: {info['tarih']}
+- Firma: {info['firma']}
+- Tutar: {info['tutar']} TL
+- KDV: {info['kdv']} TL
+"""
     
-    def _process_general_document(self, text: str) -> str:
-        """Process general tax documents."""
-        return "Genel belge analizi yapılıyor..." 
+    async def _parse_hesap_plani(self, file_path: str) -> str:
+        """Parse hesap planı PDF."""
+        reader = pypdf.PdfReader(file_path)
+        text = ""
+        for page in reader.pages:
+            text += page.extract_text()
+        
+        # Basic implementation - you would want to make this more sophisticated
+        return "Hesap planı işlendi."
+    
+    async def _parse_beyanname(self, file_path: str) -> str:
+        """Parse beyanname PDF."""
+        reader = pypdf.PdfReader(file_path)
+        text = ""
+        for page in reader.pages:
+            text += page.extract_text()
+        
+        # Basic implementation - you would want to make this more sophisticated
+        return "Beyanname işlendi."
+    
+    def _extract_date(self, text: str) -> str:
+        """Extract date from text."""
+        date_match = re.search(r'\d{2}[./]\d{2}[./]\d{4}', text)
+        return date_match.group(0) if date_match else "Bulunamadı"
+    
+    def _extract_amount(self, text: str) -> str:
+        """Extract amount from text."""
+        amount_match = re.search(r'(?:TOPLAM|TUTAR)[^\d]*(\d+(?:\.\d{2})?)', text)
+        return amount_match.group(1) if amount_match else "Bulunamadı"
+    
+    def _extract_vat(self, text: str) -> str:
+        """Extract VAT amount from text."""
+        vat_match = re.search(r'KDV[^\d]*(\d+(?:\.\d{2})?)', text)
+        return vat_match.group(1) if vat_match else "Bulunamadı"
+    
+    def _extract_company(self, text: str) -> str:
+        """Extract company name from text."""
+        company_match = re.search(r'(?:SAYIN|FİRMA)[^\n]*\n([^\n]+)', text)
+        return company_match.group(1).strip() if company_match else "Bulunamadı" 

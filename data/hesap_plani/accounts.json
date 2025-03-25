@@ -1,0 +1,44 @@
+[
+  {
+    "code": "100",
+    "name": "KASA",
+    "type": "Bilanço Hesabı",
+    "group": "Dönen Varlıklar"
+  },
+  {
+    "code": "102",
+    "name": "BANKALAR",
+    "type": "Bilanço Hesabı",
+    "group": "Dönen Varlıklar"
+  },
+  {
+    "code": "120",
+    "name": "ALICILAR",
+    "type": "Bilanço Hesabı",
+    "group": "Dönen Varlıklar"
+  },
+  {
+    "code": "320",
+    "name": "SATICILAR",
+    "type": "Bilanço Hesabı",
+    "group": "Kısa Vadeli Yabancı Kaynaklar"
+  },
+  {
+    "code": "391",
+    "name": "HESAPLANAN KDV",
+    "type": "Bilanço Hesabı",
+    "group": "Kısa Vadeli Yabancı Kaynaklar"
+  },
+  {
+    "code": "600",
+    "name": "YURTİÇİ SATIŞLAR",
+    "type": "Gelir Tablosu Hesabı",
+    "group": "Gelir Tablosu Hesapları"
+  },
+  {
+    "code": "191",
+    "name": "İNDİRİLECEK KDV",
+    "type": "Bilanço Hesabı",
+    "group": "Dönen Varlıklar"
+  }
+]

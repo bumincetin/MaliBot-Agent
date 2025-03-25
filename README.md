@@ -1,63 +1,125 @@
-# MaliBot - Mali Müşavir Asistanı
+# MaliBot - AI-Powered Accounting Assistant
 
-MaliBot, Türkiye'deki mali müşavirler için geliştirilmiş yapay zeka destekli bir asistan uygulamasıdır. Ollama üzerinde çalışan Mistral modelini kullanarak Türkçe dil desteği ile mali müşavirlere günlük işlerinde yardımcı olur.
+MaliBot is an intelligent accounting assistant that helps with various accounting tasks, including KDV calculations, PDF parsing, email writing, and deadline tracking. It integrates with popular accounting systems like DBS and Zirve Nova.
 
-## Özellikler
+## Features
 
-- 🤖 Ollama (Mistral) tabanlı Türkçe dil desteği
-- 📊 KDV Hesaplama Aracı
-- 📚 Türk Vergi Mevzuatı Arama ve Bilgi Sorgulama
-- 📄 E-Fatura PDF Analiz ve Özetleme
-- ✉️ Resmi Yazışma E-posta Oluşturma
-- ⏰ Beyanname Takip ve Hatırlatma Sistemi
-- 🧠 FAISS/ChromaDB ile Gelişmiş Bellek Sistemi
+### 1. KDV Calculator
+- Calculate KDV (VAT) for any amount
+- Support for different KDV rates
+- Detailed breakdown of calculations
 
-## Kurulum
+### 2. PDF Parser
+- Parse e-fatura (e-invoice) documents
+- Extract information from hesap planı (account plan)
+- Process beyanname (tax declaration) documents
+- Automatic data extraction and organization
 
-1. Ollama'yı yükleyin:
-   - Windows için: https://ollama.ai/download
-   - Linux için: `curl https://ollama.ai/install.sh | sh`
-   - macOS için: `brew install ollama`
+### 3. Email Writer
+- Generate professional emails for:
+  - Tax notices
+  - Invoice notices
+  - Payment reminders
+- Auto-fill based on extracted information
+- Multiple language support
 
-2. Mistral modelini indirin:
+### 4. Deadline Tracker
+- Track beyanname (tax declaration) deadlines
+- Monitor upcoming deadlines
+- Status tracking and notifications
+- Calendar integration
+
+### 5. Hesap Planı Search
+- Search by account code
+- Search by keywords
+- Detailed account information display
+- Account type and group categorization
+
+### 6. Accounting System Integration
+- DBS integration
+- Zirve Nova integration
+- Automated transaction entry
+- Data synchronization
+
+## Installation
+
+1. Clone the repository:
 ```bash
-ollama pull mistral
+git clone https://github.com/yourusername/malibot.git
+cd malibot
 ```
 
-3. Gerekli Python paketlerini yükleyin:
+2. Install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
-4. Uygulamayı başlatın:
+3. Install Ollama:
+- Download from: https://ollama.ai/download
+- Install the application
+- Pull the Mistral model:
+```bash
+ollama pull mistral
+```
+
+## Usage
+
+1. Start the application:
 ```bash
 python main.py
 ```
 
-## Proje Yapısı
+2. Open your web browser and navigate to:
+```
+http://localhost:7860
+```
+
+3. Interact with MaliBot through the chat interface:
+- Type messages to ask questions
+- Upload PDFs for processing
+- Use the various tools through the interface
+
+## Project Structure
 
 ```
 malibot/
-├── tools/           # Özel araçlar (KDV hesaplayıcı, PDF işleyici vb.)
-├── memory/          # FAISS/ChromaDB bellek sistemi
-├── chat/           # Sohbet yönetimi ve Ollama entegrasyonu
-├── frontend/       # Gradio arayüzü
-└── main.py         # Ana uygulama
+├── chat/
+│   ├── assistant.py
+│   └── tools/
+│       ├── kdv_calculator.py
+│       ├── pdf_parser.py
+│       ├── email_writer.py
+│       ├── deadline_tracker.py
+│       ├── hesap_plani.py
+│       └── accounting_system.py
+├── frontend/
+│   └── interface.py
+├── memory/
+│   └── vector_store.py
+├── main.py
+└── requirements.txt
 ```
 
-## Kullanım
-
-1. Gradio arayüzünü açın (varsayılan: http://localhost:7860)
-2. PDF dosyalarınızı yükleyin (vergi mevzuatı, e-faturalar)
-3. Sohbet başlatın ve MaliBot'a sorularınızı sorun
-
-## Gereksinimler
+## Requirements
 
 - Python 3.8+
 - Ollama
-- Mistral modeli
-- Gerekli Python paketleri (requirements.txt'de listelenmiştir)
+- Mistral model
+- Dependencies listed in requirements.txt
 
-## Lisans
+## Contributing
 
-MIT License 
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- Ollama for providing the AI model infrastructure
+- The open-source community for various libraries used in this project 

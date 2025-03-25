@@ -1,0 +1,6 @@
+{
+  "default": "\nSayın {recipient},\n\n{subject} hakkında size bilgi vermek istiyorum.\n\n",
+  "tax_notice": "\nSayın {recipient},\n\n{date} tarihli vergi bildirimi hakkında sizi bilgilendirmek istiyorum.\n\nBeyanname son gönderim tarihi: {deadline}\n\n",
+  "invoice_notice": "\nSayın {recipient},\n\n{date} tarihli ve {amount} TL tutarındaki faturanız hakkında bilgilendirme.\n\n",
+  "payment_reminder": "\nSayın {recipient},\n\n{date} vadeli {amount} TL tutarındaki ödemeniz hakkında hatırlatma.\n\nSon ödeme tarihi: {deadline}\n\n"
+}
